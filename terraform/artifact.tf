@@ -4,8 +4,8 @@ module "artifact_registry" {
   location   = var.region
   name       = var.artifact_registry_name
   format     = { docker = { standard = {} } }
+  
   iam = {
-    "roles/artifactregistry.admin" = ["serviceAccount:sa-cicd@project-a44aae81-833b-4037-891.iam.gserviceaccount.com"]
+    "roles/artifactregistry.reader" = ["serviceAccount:${module.gke-sa.email}"]
   }
 }
-

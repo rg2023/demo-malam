@@ -3,7 +3,7 @@ module "cluster" {
   project_id = var.project_id
   name       = var.cluster_name
   location   = var.region
-
+  deletion_protection = false
   access_config = {
     ip_access = {
       authorized_ranges = {
@@ -44,4 +44,8 @@ module "node_pool" {
     email        = module.gke-sa.email
     oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
   }
+  depends_on = [
+    google_service_account_iam_member.gke_sa_user
+  ]
+
 }
