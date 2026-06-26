@@ -39,9 +39,10 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        env:
-          TF_VAR_PROJECT_ID: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: terraform plan -out=tfplan.bin -no-color
+        # env:
+        #   TF_VAR_PROJECT_ID: ${{ secrets.TF_VAR_PROJECT_ID }}
+        # run: terraform plan -out=tfplan.bin -no-color
+        run: echo "${{ secrets.TF_VAR_PROJECT_ID }}"
 
       
       - name: Publish Plan to PR
