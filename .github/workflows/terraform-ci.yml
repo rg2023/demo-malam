@@ -3,6 +3,8 @@ name: Terraform Pipeline
 on:
   pull_request:
     branches: [ main, dev ]
+  push:
+    branches: [ dev, main ]
   workflow_dispatch:
 
 permissions:
@@ -41,20 +43,6 @@ jobs:
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
         run: terraform plan -out=tfplan.bin -no-color
-
-
-      # # הגנה מפני מחיקות אוטומטיות ב-Dev
-      # - name: Check for destructive changes
-      #   id: check
-      #   run: |
-      #     DESTROY=$(terraform show -json tfplan.bin | jq -r '
-      #       [ .resource_changes[]? 
-      #         | select( any(.change.actions[]; . == "delete") 
-      #                   or any(.change.actions[]; . == "replace") )
-      #       ] | length > 0
-      #     ')
-      #     echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
-
 
       # 1. בראנץ' DEV - רץ אוטומטית מיד אחרי המיזוג (Push)
       - name: Terraform Apply to DEV (Automatic)
