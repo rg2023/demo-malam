@@ -39,7 +39,6 @@ jobs:
           terraform fmt -check
           terraform validate
 
-      # מריץ את ה-Plan ומייצר קובץ ריצה
       - name: Terraform Plan
         id: plan
         env:
