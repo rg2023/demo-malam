@@ -3,7 +3,7 @@ name: Terraform Pipeline
 on:
   pull_request:
     branches: [ main, dev ]
-  workflow_dispatch: # זה הכפתור שמייצר את ה-Approval הידני עבור ה-Main
+  workflow_dispatch:
 
 permissions:
   contents: read
