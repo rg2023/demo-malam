@@ -1,4 +1,4 @@
-project_id        = ""
+# project_id        = ""
 cluster_name      = "demo-cluster"
 region            = "me-west1"
 service_account   = "gke-sa"

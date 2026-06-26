@@ -37,18 +37,11 @@ jobs:
         run: terraform validate -no-color
           
 
-      # - name: Terraform Plan
-      #   id: plan
-      #   env:
-      #     project_id: ${{ secrets.TF_VAR_project_id }}
-      #   run: terraform plan -out=tfplan.bin -no-color
-
-      - name: Debug Terraform variables
+      - name: Terraform Plan
+        id: plan
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: |
-          echo "TF_VAR_project_id=$TF_VAR_project_id"
-          echo 'var.project_id' | terraform console
+        run: terraform plan -out=tfplan.bin -no-color
 
       # - name: Publish Plan to PR
       #   if: github.event_name == 'pull_request'
