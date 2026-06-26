@@ -24,8 +24,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: sa-iac@project-a44aae81-833b-4037-891.iam.gserviceaccount.com
-
+          service_account: ${{secrets.SA}}
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -41,7 +40,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         env:
-          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
         run: terraform plan -out=tfplan.bin -no-color
 
       
