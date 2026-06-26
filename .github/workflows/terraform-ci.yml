@@ -45,7 +45,7 @@ jobs:
 
       - name: Debug Terraform variables
         env:
-        TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
+          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
         run: |
           echo "TF_VAR_project_id=$TF_VAR_project_id"
           echo 'var.project_id' | terraform console
