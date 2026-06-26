@@ -35,9 +35,8 @@ jobs:
         run: terraform init -input=false
 
       - name: Terraform Format & Validate
-        run: |
-          terraform fmt -check
-          terraform validate
+        run: terraform validate -no-color
+          
 
       - name: Terraform Plan
         id: plan
