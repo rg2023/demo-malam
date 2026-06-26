@@ -13,6 +13,8 @@ permissions:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+    defaults:
+    working-directory: ./terraform
 
     steps:
       - uses: actions/checkout@v4
