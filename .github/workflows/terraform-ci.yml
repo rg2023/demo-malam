@@ -45,7 +45,7 @@ jobs:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
         run: terraform plan -out=tfplan.bin -no-color
 
-      # מפרסם את תוצאות הפלן בתוך ה-PR כדי שתוכלי לראות מה עומד לקרות
+      
       - name: Publish Plan to PR
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
