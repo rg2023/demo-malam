@@ -76,9 +76,9 @@ jobs:
       # -------------------------------------------------------------------------
 
       # 1. בראנץ' DEV - רץ אוטומטית מיד אחרי המיזוג (Push)
-      - name: Terraform Apply to DEV (Automatic)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && steps.check.outputs.destroy == 'false'
-        run: terraform apply -auto-approve tfplan.bin
+      # - name: Terraform Apply to DEV (Automatic)
+      #   if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && steps.check.outputs.destroy == 'false'
+      #   run: terraform apply -auto-approve tfplan.bin
 
       # 2. בראנץ' MAIN - ירוץ אך ורק אם לחצת על הכפתור הידני ב-GitHub (Workflow Dispatch)
       - name: Terraform Apply to MAIN (Manual Approval)
