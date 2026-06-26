@@ -12,7 +12,7 @@ module "gke-sa" {
 }
 
 resource "google_service_account_iam_member" "gke_sa_user" {
-  service_account_id = module.gke-sa.email
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${module.gke-sa.email}"
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:sa-iac@project-a44aae81-833b-4037-891.iam.gserviceaccount.com"
 }
