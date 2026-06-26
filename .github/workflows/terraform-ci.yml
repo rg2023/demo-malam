@@ -11,20 +11,23 @@ permissions:
   pull-requests: write
 
 jobs:
-  terraform:
+  # ─────────────────────────────────────────
+  # JOB 1 — Init & Validate
+  # ─────────────────────────────────────────
+  terraform-init:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./terraform
-
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4                          # ✅ חייב להיות
 
-      - name: Authenticate to Google Cloud
+      - name: Authenticate to Google Cloud                 # ✅ חייב להיות
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{secrets.SA}}
+          service_account: ${{ secrets.SA }}
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -33,46 +36,92 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Format & Validate
+      - name: Terraform Validate
         run: terraform validate -no-color
 
+  # ─────────────────────────────────────────
+  # JOB 2 — Plan
+  # ─────────────────────────────────────────
+  terraform-plan:
+    runs-on: ubuntu-latest
+    needs: terraform-init                                  # ✅ שם נכון
+    defaults:
+      run:
+        working-directory: ./terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SA }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Clear Stale Lock
+        continue-on-error: true
+        run: |
+          LOCK_ID=$(gsutil cat gs://demo-malam/state/default.tflock 2>/dev/null \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['ID'])" 2>/dev/null || echo "")
+          if [ -n "$LOCK_ID" ]; then
+            echo "Stale lock: $LOCK_ID — unlocking..."
+            terraform force-unlock -force "$LOCK_ID"
+          fi
+
       - name: Terraform Plan
-        id: plan
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
         run: terraform plan -out=tfplan.bin -no-color
 
-      # - name: Publish Plan to PR
-      #   if: github.event_name == 'pull_request'
-      #   uses: actions/github-script@v7
-      #   with:
-      #     script: |
-      #       github.rest.issues.createComment({
-      #         issue_number: context.issue.number,
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         body: "### Terraform Plan Result 🚀\n_Validated and ready for review!_"
-      #       })
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ./terraform/tfplan.bin
+          retention-days: 1
 
-      # # הגנה מפני מחיקות אוטומטיות ב-Dev
-      # - name: Check for destructive changes
-      #   id: check
-      #   run: |
-      #     DESTROY=$(terraform show -json tfplan.bin | jq -r '
-      #       [ .resource_changes[]? 
-      #         | select( any(.change.actions[]; . == "delete") 
-      #                   or any(.change.actions[]; . == "replace") )
-      #       ] | length > 0
-      #     ')
-      #     echo "destroy=$DESTROY" >> $GITHUB_OUTPUT
+  # # ─────────────────────────────────────────
+  # # JOB 3 — Apply (ידני על main בלבד)
+  # # ─────────────────────────────────────────
+  # terraform-apply:
+  #   runs-on: ubuntu-latest
+  #   needs: terraform-plan                                  # ✅ שם נכון
+  #   if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+  #   environment: production
+  #   defaults:
+  #     run:
+  #       working-directory: ./terraform
+  #   steps:
+  #     - uses: actions/checkout@v4
 
+  #     - name: Authenticate to Google Cloud
+  #       uses: google-github-actions/auth@v2
+  #       with:
+  #         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  #         service_account: ${{ secrets.SA }}
 
-      # # 1. בראנץ' DEV - רץ אוטומטית מיד אחרי המיזוג (Push)
-      # # - name: Terraform Apply to DEV (Automatic)
-      # #   if: github.event_name == 'push' && github.ref == 'refs/heads/dev' && steps.check.outputs.destroy == 'false'
-      # #   run: terraform apply -auto-approve tfplan.bin
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: 1.12.2
 
-      # # 2. בראנץ' MAIN - ירוץ אך ורק אם לחצת על הכפתור הידני ב-GitHub (Workflow Dispatch)
-      # - name: Terraform Apply to MAIN (Manual Approval)
-      #   if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-      #   run: terraform apply -auto-approve tfplan.bin
+  #     - name: Terraform Init
+  #       run: terraform init -input=false
+
+  #     - name: Download Plan Artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: tfplan
+  #         path: ./terraform
+
+  #     - name: Terraform Apply
+  #       env:
+  #         TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
+  #       run: terraform apply -auto-approve tfplan.bin
