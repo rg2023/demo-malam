@@ -35,7 +35,6 @@ jobs:
 
       - name: Terraform Format & Validate
         run: terraform validate -no-color
-          
 
       - name: Terraform Plan
         id: plan
