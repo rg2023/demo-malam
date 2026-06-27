@@ -26,7 +26,6 @@ module "cluster" {
   }
 }
 
-
 module "node_pool" {
   source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/gke-nodepool?ref=v56.2.0"
   project_id = var.project_id
