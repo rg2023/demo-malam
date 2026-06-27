@@ -8,6 +8,7 @@ module "cluster" {
     ip_access = {
       authorized_ranges = {
         internal-vms = "10.0.0.0/16"
+        my-nachine = "79.177.145.252/32"
       }
     }
      private_nodes = true
@@ -32,6 +33,7 @@ module "node_pool" {
   cluster_name =   module.cluster.name
   location     = var.region
   name         = var.node_pool_name
+  tags         = ["gke-node"] 
   node_config = {
     machine_type = "e2-medium" 
     autoscaling = {
