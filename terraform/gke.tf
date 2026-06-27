@@ -33,6 +33,7 @@ module "node_pool" {
   cluster_name =   module.cluster.name
   location     = var.region
   name         = var.node_pool_name
+  tags         = ["gke-node"] 
   node_config = {
     machine_type = "e2-medium" 
     autoscaling = {
