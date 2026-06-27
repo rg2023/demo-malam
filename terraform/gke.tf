@@ -8,6 +8,7 @@ module "cluster" {
     ip_access = {
       authorized_ranges = {
         internal-vms = "10.0.0.0/16"
+        my-nachine = "79.177.145.252/32"
       }
     }
      private_nodes = true
