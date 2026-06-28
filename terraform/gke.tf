@@ -11,6 +11,9 @@ module "cluster" {
         # my-machine = "79.177.145.203/32"
       }
     }
+    dns_access = {
+      allow_external_traffic = true
+    }
      private_nodes = true
   }
   vpc_config = {
