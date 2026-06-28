@@ -21,7 +21,6 @@ resource "google_dns_record_set" "demoapp" {
   project      = var.project_id
   rrdatas      = [google_compute_global_address.lb_ip.address]
 }
-
 resource "google_compute_managed_ssl_certificate" "demoapp" {
   name    = "demoapp-cert"
   project = var.project_id
