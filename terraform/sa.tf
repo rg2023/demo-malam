@@ -1,7 +1,7 @@
 module "gke-sa" {
   source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/iam-service-account?ref=v56.2.0"
   project_id = var.project_id
-  name       = var.service_account
+  name       = "${var.service_account}-${terraform.workspace}"
 
   iam_project_roles = {
     "${var.project_id}" = [

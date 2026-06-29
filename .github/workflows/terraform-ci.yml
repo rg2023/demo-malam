@@ -25,12 +25,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. התחברות אחת ויחידה לגוגל שמשמשת את כל השלבים
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.SA }}
 
+      # 2. התקנת השרת של טרפורם עם הגרסה הספציפית שלך
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -42,25 +44,32 @@ jobs:
       - name: Terraform Format & Validate
         run: terraform validate -no-color
 
-      - name: Terraform Plan
+      # 3. ניהול ה-Workspace, ה-Plan וה-Apply תחת שלב חכם אחד
+      - name: Select Terraform Workspace & Run
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: terraform plan -out=tfplan.bin -no-color
-
-      # =========================
-      # APPLY ל-DEV אחרי merge
-      # =========================
-      - name: Terraform Apply (DEV)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
-        env:
-          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: terraform apply -auto-approve tfplan.bin
-
-      # =========================
-      # APPLY ל-MAIN ידני בלבד
-      # =========================
-      - name: Terraform Apply (MAIN - Manual)
-        if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
-        env:
-          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: terraform apply -auto-approve tfplan.bin
+        run: |
+          # א. קביעת הסביבה (dev/prod) לפי בראנץ' היעד של ה-PR או הבראנץ' הנוכחי ב-Push
+          TARGET_BRANCH="${{ github.base_ref || github.ref_name }}"
+          
+          if [ "$TARGET_BRANCH" = "main" ]; then
+            ENV="prod"
+          else
+            ENV="dev"
+          fi
+          
+          echo "🚀 Selected Environment: $ENV"
+          
+          # ב. מעבר לוורקספייס המתאים (או יצירה שלו אם הוא לא קיים)
+          terraform workspace select $ENV || terraform workspace new $ENV
+          
+          # ג. הרצת ה-Plan שיוצר את קובץ הריצה המקומי
+          terraform plan -out=tfplan.bin -no-color
+          
+          # ד. הרצת Apply אוטומטי רק במיזוג (Push) או בהפעלה ידנית (workflow_dispatch)
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "⚡ Running Apply for $ENV..."
+            terraform apply -auto-approve tfplan.bin
+          else
+            echo "📝 PR Detected - Showing Plan only (Skipping Apply)"
+          fi

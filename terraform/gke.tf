@@ -1,7 +1,7 @@
 module "cluster" {
   source     = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/gke-cluster-standard?ref=v56.2.0"
   project_id = var.project_id
-  name       = var.cluster_name
+  name       = "${var.cluster_name}-${terraform.workspace}"
   location   = var.region
   deletion_protection = false
   access_config = {
@@ -9,7 +9,6 @@ module "cluster" {
       authorized_ranges = {
         internal-vms = "10.0.0.0/16"
        # my-machine = "79.177.145.203/32"
-        shell="34.6.5.198/32"
       }
     }
     dns_access = {
@@ -19,7 +18,7 @@ module "cluster" {
   }
   vpc_config = {
     network    =  module.vpc.self_link
-    subnetwork = module.vpc.subnets["${var.region}/${var.subnet_name}"].self_link
+    subnetwork = module.vpc.subnets["${var.region}/${var.subnet_name}-${terraform.workspace}"].self_link
     secondary_range_names = {
       pods     = "pods"
       services = "services"
@@ -36,7 +35,7 @@ module "node_pool" {
   project_id = var.project_id
   cluster_name =   module.cluster.name
   location     = var.region
-  name         = var.node_pool_name
+  name         = "${var.node_pool_name}-${terraform.workspace}"
   tags         = ["gke-node"] 
   node_config = {
     machine_type = "e2-medium" 
