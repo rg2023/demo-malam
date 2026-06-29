@@ -11,6 +11,7 @@ permissions:
   contents: read
   id-token: write
   pull-requests: write
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -49,14 +50,8 @@ jobs:
       - name: Terraform Plan
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: terraform plan -out=tfplan.bin -no-color
+        run: terraform plan -no-color 2>&1 | tee plan_output.txt
 
-      # ← שומר את קובץ ה-plan
-      - name: Upload Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: terraform/tfplan.bin
 
   apply:
     runs-on: ubuntu-latest
@@ -82,21 +77,11 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Select Workspace
+      - name: Select Workspace & Apply
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
         run: |
           ENV=$([[ "${{ github.ref_name }}" == "main" ]] && echo "prod" || echo "dev")
+          echo "🚀 Deploying to: $ENV"
           terraform workspace select $ENV || terraform workspace new $ENV
-
-      # ← מוריד את קובץ ה-plan שנשמר
-      - name: Download Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: terraform/
-
-      - name: Terraform Apply
-        env:
-          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
-        run: terraform apply -auto-approve tfplan.bin
+          terraform apply -auto-approve -no-color
