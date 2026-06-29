@@ -1,3 +1,16 @@
+name: Terraform Pipeline
+
+on:
+  pull_request:
+    branches: [dev, main]
+  push:
+    branches: [dev, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pull-requests: write
 jobs:
   plan:
     runs-on: ubuntu-latest
