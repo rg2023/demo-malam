@@ -1,4 +1,3 @@
-
 module "nat" {
   source         = "github.com/GoogleCloudPlatform/cloud-foundation-fabric//modules/net-cloudnat?ref=v56.2.0"
   project_id     = var.project_id
