@@ -3,19 +3,19 @@ module "firewall" {
   project_id = var.project_id
   network    = module.vpc.name
   ingress_rules = {
-    allow-health-checks = {
+    "allow-health-checks-${terraform.workspace}" = {
       description          = "Allow GCP health checks"
       source_ranges        = ["130.211.0.0/22", "35.191.0.0/16"]
       targets              = ["gke-node"]
       rules = [{ protocol = "tcp" }]
     }
-     allow-http = {
+     "allow-http-${terraform.workspace}" = {
       description   = "Allow HTTP traffic"
       source_ranges = ["0.0.0.0/0"]
       targets       = ["gke-node"]
       rules         = [{ protocol = "tcp", ports = ["80"] }]
     }
-    allow-https = {
+    "allow-https-${terraform.workspace}" = {
       description   = "Allow HTTPS traffic"
       source_ranges = ["0.0.0.0/0"]
       targets       = ["gke-node"]
