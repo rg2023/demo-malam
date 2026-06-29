@@ -39,6 +39,7 @@ module "node_pool" {
   tags         = ["gke-node"] 
   node_config = {
     machine_type = "e2-medium" 
+    disk_type    = "pd-standard"
     autoscaling = {
       max_node_count = 2
       min_node_count = 1
