@@ -8,7 +8,7 @@ module "cluster" {
     ip_access = {
       authorized_ranges = {
         internal-vms = "10.0.0.0/16"
-        my-machine = "34.7.214.192/32"
+        my-machine = "34.158.103.35/32"
       }
     }
     dns_access = {
