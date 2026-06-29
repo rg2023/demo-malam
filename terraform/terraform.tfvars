@@ -1,0 +1,8 @@
+# project_id        = ""
+cluster_name      = "demo-cluster"
+region            = "me-west1"
+service_account   = "gke-sa"
+node_pool_name    = "demo-pool"
+vpc_name = "demo-vpc"
+subnet_name = "demo-subnet"
+artifact_registry_name =  "demo-artifact"
