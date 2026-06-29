@@ -2,11 +2,9 @@ name: Terraform Pipeline
 
 on:
   pull_request:
-    branches: [ dev, main ]
-
+    branches: [dev, main]
   push:
-    branches: [ dev, main ]
-
+    branches: [dev, main]
   workflow_dispatch:
 
 permissions:
@@ -15,9 +13,9 @@ permissions:
   pull-requests: write
 
 jobs:
-  terraform:
+  plan:
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'pull_request'
     defaults:
       run:
         working-directory: ./terraform
@@ -25,14 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. התחברות אחת ויחידה לגוגל שמשמשת את כל השלבים
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.SA }}
 
-      # 2. התקנת השרת של טרפורם עם הגרסה הספציפית שלך
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -41,35 +37,51 @@ jobs:
       - name: Terraform Init
         run: terraform init -input=false
 
-      - name: Terraform Format & Validate
+      - name: Terraform Validate
         run: terraform validate -no-color
 
-      # 3. ניהול ה-Workspace, ה-Plan וה-Apply תחת שלב חכם אחד
-      - name: Select Terraform Workspace & Run
+      - name: Select Workspace
         env:
           TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
         run: |
-          # א. קביעת הסביבה (dev/prod) לפי בראנץ' היעד של ה-PR או הבראנץ' הנוכחי ב-Push
-          TARGET_BRANCH="${{ github.base_ref || github.ref_name }}"
-          
-          if [ "$TARGET_BRANCH" = "main" ]; then
-            ENV="prod"
-          else
-            ENV="dev"
-          fi
-          
-          echo "🚀 Selected Environment: $ENV"
-          
-          # ב. מעבר לוורקספייס המתאים (או יצירה שלו אם הוא לא קיים)
+          ENV=$([[ "${{ github.base_ref }}" == "main" ]] && echo "prod" || echo "dev")
           terraform workspace select $ENV || terraform workspace new $ENV
-          
-          # ג. הרצת ה-Plan שיוצר את קובץ הריצה המקומי
-          terraform plan -out=tfplan.bin -no-color
-          
-          # ד. הרצת Apply אוטומטי רק במיזוג (Push) או בהפעלה ידנית (workflow_dispatch)
-          if [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "⚡ Running Apply for $ENV..."
-            terraform apply -auto-approve tfplan.bin
-          else
-            echo "📝 PR Detected - Showing Plan only (Skipping Apply)"
-          fi
+
+      - name: Terraform Plan
+        env:
+          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
+        run: terraform plan -no-color 2>&1 | tee plan_output.txt
+
+
+  apply:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    defaults:
+      run:
+        working-directory: ./terraform
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.SA }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.12.2
+
+      - name: Terraform Init
+        run: terraform init -input=false
+
+      - name: Select Workspace & Apply
+        env:
+          TF_VAR_project_id: ${{ secrets.TF_VAR_PROJECT_ID }}
+        run: |
+          ENV=$([[ "${{ github.ref_name }}" == "main" ]] && echo "prod" || echo "dev")
+          echo "🚀 Deploying to: $ENV"
+          terraform workspace select $ENV || terraform workspace new $ENV
+          terraform apply -auto-approve -no-color
