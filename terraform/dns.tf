@@ -1,6 +1,6 @@
 # IP סטטי קבוע
 resource "google_compute_global_address" "lb_ip" {
-  name    = "demoapp-ip"
+  name    = "demoapp-ip-${terraform.workspace}"
   project = var.project_id
 }
 
